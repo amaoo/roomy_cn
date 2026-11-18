@@ -16,7 +16,7 @@
     <Description>Find out what's filling up your PC and free up space safely.</Description>
     <Copyright>© 2026 krezio</Copyright>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <SatelliteResourceLanguages>en;ru;zh-Hans</SatelliteResourceLanguages>
     <!-- WPF owns DPI awareness; Windows Forms is only used for the tray icon. -->
     <NoWarn>$(NoWarn);SYSLIB1054;CA1416;WFO0003</NoWarn>
   </PropertyGroup>

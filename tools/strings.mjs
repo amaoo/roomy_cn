@@ -12,24 +12,40 @@ const locDir = path.join(root, 'src', 'Roomy', 'Localization');
 const manifest = JSON.parse(fs.readFileSync(path.join(locDir, 'strings.json'), 'utf8'));
 const strings = manifest.strings;
 
+// One row per catalogue: the neutral English file plus one .resx per language.
+// `field` is the strings.json property, `culture` the .NET culture suffix.
+const catalogues = [
+  { file: 'Strings.resx', culture: '', field: 'en' },
+  { file: 'Strings.ru.resx', culture: 'ru', field: 'ru' },
+  { file: 'Strings.zh-Hans.resx', culture: 'zh-Hans', field: 'zh-Hans' },
+];
+
+for (const e of strings) {
+  for (const { field, culture } of catalogues) {
+    if (typeof e[field] !== 'string' || e[field].length === 0)
+      throw new Error(`strings.json: "${e.key}" is missing its "${field}" value (${culture || 'neutral'})`);
+  }
+}
+
 const xmlEscape = (s) => s
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
-const resx = (entries, lang) => `<?xml version="1.0" encoding="utf-8"?>
+const resx = (entries, field) => `<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 ${entries.map((e) => `  <data name="${e.key}" xml:space="preserve">
-    <value>${xmlEscape(lang === 'ru' ? e.ru : e.en)}</value>
+    <value>${xmlEscape(e[field])}</value>
   </data>`).join('\n')}
 </root>
 `;
 
-fs.writeFileSync(path.join(locDir, 'Strings.resx'), resx(strings, 'en'));
-fs.writeFileSync(path.join(locDir, 'Strings.ru.resx'), resx(strings, 'ru'));
+for (const { file, field } of catalogues) {
+  fs.writeFileSync(path.join(locDir, file), resx(strings, field));
+}
 
 const properties = strings
   .map((e) => `    /// <summary>${e.en.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*\//g, '* /')}</summary>\n    public static string ${e.key} => Loc.Get("${e.key}");`)
@@ -48,4 +64,4 @@ ${properties}
 }
 `);
 
-console.log(`strings.json: ${strings.length} strings; S.g.cs and both .resx files written`);
+console.log(`strings.json: ${strings.length} strings; S.g.cs and ${catalogues.map((c) => c.file).join(', ')} written`);
